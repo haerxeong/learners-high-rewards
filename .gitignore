@@ -1,0 +1,69 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Frontend / JavaScript / TypeScript
+node_modules/
+dist/
+dist-ssr/
+build/
+coverage/
+.vite/
+.next/
+.nuxt/
+.svelte-kit/
+*.local
+*.tsbuildinfo
+
+# Package manager caches
+.npm/
+.pnpm-store/
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Spring Boot / Java
+target/
+out/
+*.class
+*.jar
+*.war
+*.ear
+*.pid
+hs_err_pid*
+replay_pid*
+
+# Gradle
+.gradle/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Maven
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Local runtime files
+logs/
+tmp/
+temp/
