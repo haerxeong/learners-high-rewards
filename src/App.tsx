@@ -7,6 +7,7 @@ import { BigRoulette } from './screens/reward/BigRoulette';
 import { ShopScreen } from './screens/ShopScreen';
 import { StorageScreen } from './screens/StorageScreen';
 import { HallScreen } from './screens/HallScreen';
+import { AdminConsole } from './screens/admin/AdminConsole';
 import type { TabKey } from './types';
 
 const TABLET_W = 1194;
@@ -84,16 +85,34 @@ function TabletApp() {
   );
 }
 
+/* 해시 라우트: #/admin 이면 데스크탑 운영 콘솔 */
+function useHashRoute() {
+  const [hash, setHash] = useState(window.location.hash);
+  useEffect(() => {
+    const onChange = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', onChange);
+    return () => window.removeEventListener('hashchange', onChange);
+  }, []);
+  return hash;
+}
+
 export default function App() {
+  const hash = useHashRoute();
+  const isAdmin = hash === '#/admin' || hash === '#admin';
+
   return (
     <StoreProvider>
-      <div style={{ minHeight: '100vh', background: '#07090d', display: 'grid', placeItems: 'center', padding: 20 }}>
-        <Fit w={TABLET_W} h={TABLET_H}>
-          <TabletDevice>
-            <TabletApp />
-          </TabletDevice>
-        </Fit>
-      </div>
+      {isAdmin ? (
+        <AdminConsole />
+      ) : (
+        <div style={{ minHeight: '100vh', background: '#ffffff', display: 'grid', placeItems: 'center', padding: 20 }}>
+          <Fit w={TABLET_W} h={TABLET_H}>
+            <TabletDevice>
+              <TabletApp />
+            </TabletDevice>
+          </Fit>
+        </div>
+      )}
     </StoreProvider>
   );
 }

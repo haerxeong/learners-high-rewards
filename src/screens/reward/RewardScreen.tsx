@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GRADES } from '../../data';
+import { celebrate } from '../../lib/celebrate';
 import { IconCheck, IconCheckCircle, IconGift, IconShieldCheck } from '../../icons';
 import { useStore } from '../../store';
 import { Card } from '../../components/ui/Card';
@@ -80,6 +81,11 @@ export function RewardScreen({ onOpenBig }: { onOpenBig: () => void }) {
   const nextNeed = 23;
   const nextPct = 77;
 
+  /* 결과 공개 순간 축포 */
+  useEffect(() => {
+    if (phase === 'result' && result) celebrate(result.g);
+  }, [phase, result]);
+
   function claim() {
     if (claimed || phase !== 'idle') return;
     setPhase('reflect');
@@ -92,7 +98,7 @@ export function RewardScreen({ onOpenBig }: { onOpenBig: () => void }) {
       const item = REWARD_POOL[g][Math.floor(Math.random() * REWARD_POOL[g].length)];
       setResult({ g, item });
       setPhase('result');
-    }, 1150);
+    }, 1500);
   }
 
   function closeResult() {
@@ -196,9 +202,23 @@ export function RewardScreen({ onOpenBig }: { onOpenBig: () => void }) {
                 boxShadow: 'inset 0 0 0 1px var(--mint-line)',
               }}
             >
+              {phase === 'spinning' &&
+                [0, 0.4, 0.8].map((delay) => (
+                  <span
+                    key={delay}
+                    className="animate-burstRing"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      borderRadius: '50%',
+                      border: '2px solid var(--mint)',
+                      animationDelay: `${delay}s`,
+                    }}
+                  />
+                ))}
               <div
-                style={{ color: 'var(--mint)' }}
-                className={phase === 'spinning' ? 'animate-spinBox' : 'animate-floatY'}
+                style={{ color: 'var(--mint)', position: 'relative' }}
+                className={phase === 'spinning' ? 'animate-charge' : 'animate-floatY'}
               >
                 <IconGift size={80} sw={1.4} />
               </div>
@@ -297,21 +317,33 @@ function RewardResultModal({
         <div className="t-cap" style={{ marginBottom: 16 }}>
           {isBig ? '특별한 순간이 도착했어요' : '오늘의 보상이 도착했어요'}
         </div>
-        <div
-          style={{
-            width: 104,
-            height: 104,
-            margin: '0 auto 18px',
-            borderRadius: isBig ? '50%' : 24,
-            background: grade.bg,
-            display: 'grid',
-            placeItems: 'center',
-            fontSize: 46,
-            boxShadow: `inset 0 0 0 1.5px ${grade.color}`,
-            animation: isBig ? 'pulseBig 1.6s ease-in-out infinite' : 'popIn .4s',
-          }}
-        >
-          {item.e}
+        <div style={{ position: 'relative', width: 104, height: 104, margin: '0 auto 18px' }}>
+          <span
+            aria-hidden
+            className="animate-auraPulse"
+            style={{
+              position: 'absolute',
+              inset: -16,
+              borderRadius: '50%',
+              background: `radial-gradient(circle, ${grade.color} 0%, transparent 68%)`,
+            }}
+          />
+          <div
+            style={{
+              position: 'relative',
+              width: 104,
+              height: 104,
+              borderRadius: isBig ? '50%' : 24,
+              background: grade.bg,
+              display: 'grid',
+              placeItems: 'center',
+              fontSize: 46,
+              boxShadow: `inset 0 0 0 1.5px ${grade.color}`,
+              animation: isBig ? 'pulseBig 1.6s ease-in-out infinite' : 'revealPop .6s cubic-bezier(.2,.8,.2,1)',
+            }}
+          >
+            {item.e}
+          </div>
         </div>
         <div style={{ marginBottom: 6 }}>
           <GradeBadge g={g} />
