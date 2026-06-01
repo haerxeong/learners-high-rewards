@@ -1,4 +1,4 @@
-import { ACHIEVED, MAY_FIRST_DOW, TODAY, WEEKDAYS } from '../data';
+import { ACHIEVED, MAY_FIRST_DOW, SHIELDED, TODAY, WEEKDAYS } from '../data';
 import { IconChart, IconCheckCircle, IconClock, IconDots, IconFlame, IconGift, IconShield } from '../icons';
 import { useStore } from '../store';
 import { Card } from '../components/ui/Card';
@@ -10,11 +10,13 @@ import { TabletHeader } from '../components/TabletHeader';
 function CalendarCell({ day }: { day: number | null }) {
   if (!day) return <div />;
   const achieved = ACHIEVED.has(day);
+  const shielded = SHIELDED.has(day);
   const isToday = day === TODAY;
   return (
     <div style={{ aspectRatio: '1', display: 'grid', placeItems: 'center' }}>
       <div
         style={{
+          position: 'relative',
           width: 38,
           height: 38,
           borderRadius: 12,
@@ -22,12 +24,36 @@ function CalendarCell({ day }: { day: number | null }) {
           placeItems: 'center',
           fontSize: 14,
           fontWeight: achieved ? 500 : 400,
-          color: achieved ? 'var(--mint-deep)' : isToday ? 'var(--coral)' : 'var(--text-3)',
-          background: achieved ? 'var(--mint)' : 'transparent',
-          boxShadow: isToday ? 'inset 0 0 0 1.5px var(--coral)' : 'none',
+          color: shielded
+            ? 'var(--mint)'
+            : achieved
+              ? 'var(--mint-deep)'
+              : isToday
+                ? 'var(--coral)'
+                : 'var(--text-3)',
+          background: shielded ? 'var(--mint-soft)' : achieved ? 'var(--mint)' : 'transparent',
+          boxShadow: shielded
+            ? 'inset 0 0 0 1.5px var(--mint-line)'
+            : isToday
+              ? 'inset 0 0 0 1.5px var(--coral)'
+              : 'none',
         }}
       >
-        {day}
+        {shielded && (
+          <span
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'grid',
+              placeItems: 'center',
+              color: 'var(--mint)',
+              opacity: 0.18,
+            }}
+          >
+            <IconShield size={30} />
+          </span>
+        )}
+        <span style={{ position: 'relative' }}>{day}</span>
       </div>
     </div>
   );
@@ -122,6 +148,18 @@ export function StreakHome() {
               </span>
               <span className="t-cap" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ width: 12, height: 12, borderRadius: 4, boxShadow: 'inset 0 0 0 1.5px var(--coral)' }} /> 오늘
+              </span>
+              <span className="t-cap" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 4,
+                    background: 'var(--mint-soft)',
+                    boxShadow: 'inset 0 0 0 1.5px var(--mint-line)',
+                  }}
+                />{' '}
+                보호막 사용
               </span>
             </div>
           </Card>

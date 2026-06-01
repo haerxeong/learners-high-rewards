@@ -149,3 +149,30 @@ export const IconLock = (p: IconProps) => (
     <path d="M8.5 10.5V8a3.5 3.5 0 017 0v2.5" />
   </Ic>
 );
+export const IconSliders = (p: IconProps) => (
+  <Ic {...p}>
+    <path d="M4 7h11M19 7h1M4 17h1M9 17h11" />
+    <circle cx="16.5" cy="7" r="2.4" />
+    <circle cx="7" cy="17" r="2.4" />
+  </Ic>
+);
+export const IconGrid = (p: IconProps) => (
+  <Ic {...p}>
+    <rect x="4" y="4" width="7" height="7" rx="1.8" />
+    <rect x="13" y="4" width="7" height="7" rx="1.8" />
+    <rect x="4" y="13" width="7" height="7" rx="1.8" />
+    <rect x="13" y="13" width="7" height="7" rx="1.8" />
+  </Ic>
+);
+export const IconFlag = (p: IconProps) => (
+  <Ic {...p}>
+    <path d="M6 21V4M6 5h11l-2 3.5L17 12H6" />
+  </Ic>
+);
+export const IconUsers = (p: IconProps) => (
+  <Ic {...p}>
+    <circle cx="9" cy="8" r="3.4" />
+    <path d="M3.5 19.5a5.5 5.5 0 0111 0" />
+    <path d="M16 5.2a3.4 3.4 0 010 5.6M17.5 19.5a5.5 5.5 0 00-2.3-4.5" />
+  </Ic>
+);

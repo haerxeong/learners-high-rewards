@@ -18,3 +18,5 @@ export const ACHIEVED: Set<number> = (() => {
   [1, 3, 4].forEach((d) => s.add(d));
   return s;
 })();
+/* 보호막으로 연속 기록을 지킨 날 */
+export const SHIELDED: Set<number> = new Set([6]);
