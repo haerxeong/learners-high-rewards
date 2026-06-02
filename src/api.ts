@@ -44,6 +44,11 @@ interface BigSpinDto {
   prize: HallWinnerDto;
 }
 
+interface ShieldUseDto {
+  state: UserStateDto;
+  study: StudySummaryDto;
+}
+
 interface RewardLogDto {
   id: number;
   grade: GradeKey;
@@ -282,5 +287,9 @@ export const api = {
   },
   async useInventory(itemId: InventoryItem['id']) {
     return inventoryItem(await request<InventoryItemDto>(`/api/inventory/${itemId}/use`, { method: 'POST' }));
+  },
+  async useShield() {
+    const dto = await request<ShieldUseDto>('/api/shields/use', { method: 'POST' });
+    return { state: appState(dto.state), study: studySummary(dto.study) };
   },
 };

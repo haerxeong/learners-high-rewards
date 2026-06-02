@@ -45,6 +45,7 @@ curl -H 'X-Demo-User: demo-dain' http://localhost:8080/api/me/state
 - `GET /api/shop/exchange-logs`: exchange logs
 - `GET /api/inventory`: user inventory
 - `POST /api/inventory/{id}/use`: marks one coupon as used
+- `POST /api/shields/use`: consumes one shield and marks today as shield-protected
 - `GET /api/hall/winners`: BIG winners
 - `GET /api/hall/stats`: this-month BIG winner count
 - `GET /api/admin/reward-pool`: reward pool weights/activation

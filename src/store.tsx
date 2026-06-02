@@ -28,6 +28,7 @@ export interface Store {
   spinBig: () => Promise<BigPrize>;
   exchangeShopItem: (item: ShopItem) => Promise<void>;
   useInventoryItem: (item: InventoryItem) => Promise<void>;
+  useShield: () => Promise<void>;
 }
 
 const StoreContext = createContext<Store | null>(null);
@@ -112,6 +113,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setInventory((prev) => prev.map((it) => (it.id === updated.id ? updated : it)));
   }, []);
 
+  const useShield = useCallback(async () => {
+    const res = await api.useShield();
+    applyState(res.state);
+    setStudy(res.study);
+  }, [applyState]);
+
   const store = useMemo<Store>(
     () => ({
       loading,
@@ -134,6 +141,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       spinBig,
       exchangeShopItem,
       useInventoryItem,
+      useShield,
     }),
     [
       loading,
@@ -156,6 +164,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       spinBig,
       exchangeShopItem,
       useInventoryItem,
+      useShield,
     ],
   );
 

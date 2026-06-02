@@ -107,6 +107,8 @@ public final class ApiDtos {
             List<Integer> shieldedDays
     ) {}
 
+    public record ShieldUseResponse(UserStateResponse state, StudySummaryResponse study) {}
+
     public record RewardPoolUpdateRequest(@NotNull Integer weight, @NotNull Boolean active) {}
 
     public record ShopItemUpdateRequest(@NotNull Integer price, @NotNull Integer stock, @NotNull Boolean active) {}

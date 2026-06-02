@@ -29,6 +29,8 @@ public class UserAccount {
 
     private LocalDate lastDailyClaimDate;
 
+    private LocalDate lastShieldUsedDate;
+
     @Column(nullable = false)
     private boolean pendingBigSpin;
 
@@ -45,6 +47,8 @@ public class UserAccount {
     public void setShields(int shields) { this.shields = shields; }
     public LocalDate getLastDailyClaimDate() { return lastDailyClaimDate; }
     public void setLastDailyClaimDate(LocalDate lastDailyClaimDate) { this.lastDailyClaimDate = lastDailyClaimDate; }
+    public LocalDate getLastShieldUsedDate() { return lastShieldUsedDate; }
+    public void setLastShieldUsedDate(LocalDate lastShieldUsedDate) { this.lastShieldUsedDate = lastShieldUsedDate; }
     public boolean isPendingBigSpin() { return pendingBigSpin; }
     public void setPendingBigSpin(boolean pendingBigSpin) { this.pendingBigSpin = pendingBigSpin; }
 }
