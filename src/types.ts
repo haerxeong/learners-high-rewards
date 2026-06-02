@@ -10,6 +10,7 @@ export interface Grade {
 }
 
 export interface RewardLogEntry {
+  id?: number;
   date: string;
   time: string;
   grade: GradeKey;
@@ -17,6 +18,7 @@ export interface RewardLogEntry {
 }
 
 export interface ExchangeLogEntry {
+  id?: number;
   date: string;
   n: string;
   used: number;
@@ -24,26 +26,31 @@ export interface ExchangeLogEntry {
 }
 
 export interface InventoryItem {
+  id?: number | string;
   n: string;
   e: string;
   grade: GradeKey;
+  got?: string;
+  exp?: string;
+  status?: 'usable' | 'used';
 }
 
 export interface BigPrize {
-  id: string;
+  id: string | number;
   n: string;
   e: string;
   pct: number;
 }
 
 export interface ShopItem {
-  id: string;
+  id: string | number;
   n: string;
   e: string;
   grade: GradeKey;
   price: number;
   cat: string;
   sold: boolean;
+  stock?: number;
 }
 
 export type TabKey = 'home' | 'reward' | 'shop' | 'storage' | 'hall';

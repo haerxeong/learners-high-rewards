@@ -82,20 +82,34 @@ export function ShopScreen() {
   const { shards } = store;
   const [cat, setCat] = useState('전체');
   const [confirm, setConfirm] = useState<ShopItem | null>(null);
+  const [exchanging, setExchanging] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const items = SHOP_ITEMS.filter((i) => cat === '전체' || i.cat === cat);
+  const sourceItems = store.shopItems.length ? store.shopItems : SHOP_ITEMS;
+  const items = sourceItems.filter((i) => cat === '전체' || i.cat === cat);
 
-  function doExchange() {
+  async function doExchange() {
     if (!confirm) return;
-    store.addShards(-confirm.price);
-    store.addInventory(confirm);
-    store.pushExchange({ date: '5.29', n: confirm.n, used: confirm.price, status: '보관함' });
-    setConfirm(null);
+    setExchanging(true);
+    setActionError(null);
+    try {
+      await store.exchangeShopItem(confirm);
+      setConfirm(null);
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : '교환에 실패했습니다.');
+    } finally {
+      setExchanging(false);
+    }
   }
 
   return (
     <div className="scroll" style={{ height: '100%', overflowY: 'auto', paddingBottom: 28 }}>
       <TabletHeader title="상점" sub="모은 조각으로 교환해요" right={<ShardCounter value={shards} />} />
+      {(store.error || actionError) && (
+        <div style={{ padding: '0 32px 10px', fontSize: 12.5, color: 'var(--coral)' }}>
+          {actionError ?? store.error}
+        </div>
+      )}
 
       {/* 카테고리 칩 */}
       <div style={{ display: 'flex', gap: 8, padding: '4px 32px 16px' }}>
@@ -146,7 +160,7 @@ export function ShopScreen() {
             교환 내역
           </div>
           <Card pad={4} soft>
-            {[...store.exchangeLog, ...SHOP_HISTORY].map((h, i, arr) => (
+            {[...(store.exchangeLog.length ? store.exchangeLog : SHOP_HISTORY)].map((h, i, arr) => (
               <div
                 key={i}
                 style={{
@@ -201,8 +215,8 @@ export function ShopScreen() {
               <PillBtn variant="ghost" full onClick={() => setConfirm(null)}>
                 취소
               </PillBtn>
-              <PillBtn variant="coral" full onClick={doExchange}>
-                교환하기
+              <PillBtn variant="coral" full disabled={exchanging} onClick={doExchange}>
+                {exchanging ? '처리 중…' : '교환하기'}
               </PillBtn>
             </div>
           </div>

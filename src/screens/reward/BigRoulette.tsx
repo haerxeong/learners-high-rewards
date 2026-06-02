@@ -12,14 +12,6 @@ const BIG_PRIZES: BigPrize[] = [
   { id: 'ipadpro', n: '아이패드 프로', e: '📱', pct: 10 },
 ];
 
-/* 데모 전용 추첨 — 실제 구현은 서버(API) 응답으로 대체 */
-function pickBigPrize(): BigPrize {
-  const r = Math.random() * 100;
-  if (r < 60) return BIG_PRIZES[0];
-  if (r < 90) return Math.random() < 0.5 ? BIG_PRIZES[1] : BIG_PRIZES[2];
-  return BIG_PRIZES[3];
-}
-
 const STEP = 128;
 const ITEMW = 116;
 
@@ -36,6 +28,7 @@ export function BigRoulette({ onClose, onWin }: BigRouletteProps) {
   const [offset, setOffset] = useState(-ITEMW / 2);
   const [trans, setTrans] = useState('none');
   const [prize, setPrize] = useState<BigPrize | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const reel = useMemo(() => {
     const base: BigPrize[] = [];
@@ -44,25 +37,28 @@ export function BigRoulette({ onClose, onWin }: BigRouletteProps) {
   }, []);
   const winIndex = 38;
 
-  function spin() {
+  async function spin() {
     if (phase !== 'ready') return;
-    const won = pickBigPrize();
-    reel[winIndex] = won;
-    setPrize(won);
     setPhase('spinning');
-    requestAnimationFrame(() => {
-      setTrans('transform 3.8s cubic-bezier(.12,.66,.16,1)');
-      const jitter = (Math.random() - 0.5) * 36;
-      setOffset(-(winIndex * STEP + ITEMW / 2) + jitter);
-    });
-    setTimeout(() => setPhase('won'), 4000);
+    setError(null);
+    try {
+      const won = await store.spinBig();
+      reel[winIndex] = won;
+      setPrize(won);
+      requestAnimationFrame(() => {
+        setTrans('transform 3.8s cubic-bezier(.12,.66,.16,1)');
+        const jitter = (Math.random() - 0.5) * 36;
+        setOffset(-(winIndex * STEP + ITEMW / 2) + jitter);
+      });
+      window.setTimeout(() => setPhase('won'), 4000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'BIG 리워드 결과 확인에 실패했습니다.');
+      setPhase('ready');
+    }
   }
 
   function finish() {
     if (!prize) return;
-    store.pushReward({ date: '5.29', time: '21:31', grade: 'big', name: prize.n + ' 당첨' });
-    store.setClaimed(true);
-    store.registerHall(prize);
     onWin?.(prize);
     onClose();
   }
@@ -127,6 +123,7 @@ export function BigRoulette({ onClose, onWin }: BigRouletteProps) {
               <div className="t-body" style={{ marginTop: 8, color: 'var(--gold)' }}>
                 당신은 BIG 리워드에 진입했습니다
               </div>
+              {error && <div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--coral)' }}>{error}</div>}
             </div>
 
             {/* 룰렛 릴 */}
