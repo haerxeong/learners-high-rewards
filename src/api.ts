@@ -292,4 +292,7 @@ export const api = {
     const dto = await request<ShieldUseDto>('/api/shields/use', { method: 'POST' });
     return { state: appState(dto.state), study: studySummary(dto.study) };
   },
+  async resetDemo() {
+    return appState(await request<UserStateDto>('/api/demo/reset', { method: 'POST' }));
+  },
 };

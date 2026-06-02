@@ -29,6 +29,7 @@ export interface Store {
   exchangeShopItem: (item: ShopItem) => Promise<void>;
   useInventoryItem: (item: InventoryItem) => Promise<void>;
   useShield: () => Promise<void>;
+  resetDemo: () => Promise<void>;
 }
 
 const StoreContext = createContext<Store | null>(null);
@@ -119,6 +120,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setStudy(res.study);
   }, [applyState]);
 
+  const resetDemo = useCallback(async () => {
+    const state = await api.resetDemo();
+    applyState(state);
+    await refresh();
+  }, [applyState, refresh]);
+
   const store = useMemo<Store>(
     () => ({
       loading,
@@ -142,6 +149,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       exchangeShopItem,
       useInventoryItem,
       useShield,
+      resetDemo,
     }),
     [
       loading,
@@ -165,6 +173,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       exchangeShopItem,
       useInventoryItem,
       useShield,
+      resetDemo,
     ],
   );
 

@@ -9,4 +9,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface InventoryItemRepository extends JpaRepository<InventoryItem, Long> {
     List<InventoryItem> findByUserOrderByReceivedDateDescIdDesc(UserAccount user);
     long countByUserAndStatus(UserAccount user, InventoryStatus status);
+    void deleteByUser(UserAccount user);
 }

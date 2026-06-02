@@ -36,6 +36,7 @@ curl -H 'X-Demo-User: demo-dain' http://localhost:8080/api/me/state
 ## Main Endpoints
 
 - `GET /api/me/state`: shards, streak, shields, daily claim status, pending BIG spin
+- `POST /api/demo/reset`: resets the demo user with dummy logs, inventory, shards, and unclaimed daily reward
 - `GET /api/study/summary`: current-date study summary for the home screen
 - `POST /api/rewards/daily/claim`: server-side daily reward draw; rejects duplicate claims
 - `POST /api/rewards/big/spin`: server-side BIG draw; requires pending BIG entry
@@ -54,6 +55,10 @@ curl -H 'X-Demo-User: demo-dain' http://localhost:8080/api/me/state
 - `PATCH /api/admin/shop-items/{id}`: update `price`, `stock`, `active`
 
 ## Example Requests
+
+```bash
+curl -X POST -H 'X-Demo-User: demo-dain' http://127.0.0.1:8080/api/demo/reset
+```
 
 ```bash
 curl -X POST -H 'Content-Type: application/json' \

@@ -78,8 +78,9 @@ const CHECKLIST = [
 ];
 
 export function StreakHome() {
-  const { streak, shards, shields, study, useShield, error } = useStore();
+  const { streak, shards, shields, study, useShield, resetDemo, error } = useStore();
   const [shielding, setShielding] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [shieldMessage, setShieldMessage] = useState<string | null>(null);
   const todayDate = study ? new Date(study.today) : null;
   const today = todayDate?.getDate() ?? TODAY;
@@ -106,9 +107,33 @@ export function StreakHome() {
     }
   }
 
+  async function handleResetDemo() {
+    setResetting(true);
+    setShieldMessage(null);
+    try {
+      await resetDemo();
+      setShieldMessage('데모 데이터가 초기화됐어요. 오늘 보상을 다시 받을 수 있습니다.');
+    } catch (e) {
+      setShieldMessage(e instanceof Error ? e.message : '데모 초기화에 실패했습니다.');
+    } finally {
+      setResetting(false);
+    }
+  }
+
   return (
     <div className="scroll" style={{ height: '100%', overflowY: 'auto', paddingBottom: 28 }}>
-      <TabletHeader title="잘하고 있어요" sub={`${study?.monthLabel ?? '2026년 5월'} · 다인 학생`} right={<ShardCounter value={shards} />} />
+      <TabletHeader
+        title="잘하고 있어요"
+        sub={`${study?.monthLabel ?? '2026년 5월'} · 다인 학생`}
+        right={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <PillBtn variant="ghost" size="sm" disabled={resetting} onClick={handleResetDemo}>
+              {resetting ? '초기화 중…' : '데모 초기화'}
+            </PillBtn>
+            <ShardCounter value={shards} />
+          </div>
+        }
+      />
       {(error || shieldMessage) && (
         <div style={{ padding: '0 32px 10px', fontSize: 12.5, color: shieldMessage?.includes('지켰') ? 'var(--mint)' : 'var(--coral)' }}>
           {shieldMessage ?? error}
