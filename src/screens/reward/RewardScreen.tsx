@@ -28,34 +28,6 @@ interface PoolItem {
   shards: number;
 }
 
-/* 등급별 보상 후보 (모달 결과 표시용) */
-const REWARD_POOL: Record<GradeKey, PoolItem[]> = {
-  common: [
-    { n: '성장 조각 +12', e: '🌱', shards: 12 },
-    { n: '성장 조각 +8', e: '🌱', shards: 8 },
-  ],
-  rare: [
-    { n: '레어 조각 +25', e: '💧', shards: 25 },
-    { n: '편의점 1천원권', e: '🏪', shards: 0 },
-  ],
-  epic: [
-    { n: '에픽 조각 +60', e: '🔮', shards: 60 },
-    { n: '베스킨라빈스 파인트', e: '🍨', shards: 0 },
-  ],
-  big: [{ n: 'BIG 리워드 진입', e: '✨', shards: 0 }],
-};
-
-/* 데모 전용 추첨 — 실제 구현은 서버(API) 응답으로 대체 */
-function pickGrade(): GradeKey {
-  const r = Math.random() * 100;
-  let acc = 0;
-  for (const o of REWARD_ODDS) {
-    acc += o.pct;
-    if (r <= acc) return o.g;
-  }
-  return 'common';
-}
-
 type Phase = 'idle' | 'reflect' | 'spinning' | 'result';
 interface RewardResult {
   g: GradeKey;
@@ -74,9 +46,10 @@ function OddsRow({ g, pct }: { g: GradeKey; pct: number }) {
 }
 
 export function RewardScreen({ onOpenBig }: { onOpenBig: () => void }) {
-  const { shards, streak, claimed, shields, setClaimed, addShards, pushReward, rewardLog } = useStore();
+  const { shards, streak, claimed, shields, claimDaily, rewardLog, error } = useStore();
   const [phase, setPhase] = useState<Phase>('idle');
   const [result, setResult] = useState<RewardResult | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const nextNeed = 23;
   const nextPct = 77;
@@ -91,22 +64,23 @@ export function RewardScreen({ onOpenBig }: { onOpenBig: () => void }) {
     setPhase('reflect');
   }
 
-  function startSpin() {
+  async function startSpin() {
     setPhase('spinning');
-    setTimeout(() => {
-      const g = pickGrade();
-      const item = REWARD_POOL[g][Math.floor(Math.random() * REWARD_POOL[g].length)];
-      setResult({ g, item });
-      setPhase('result');
-    }, 1500);
+    setActionError(null);
+    try {
+      const reward = await claimDaily();
+      window.setTimeout(() => {
+        setResult(reward);
+        setPhase('result');
+      }, 700);
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : '보상 수령에 실패했습니다.');
+      setPhase('idle');
+      setResult(null);
+    }
   }
 
   function closeResult() {
-    if (!result) return;
-    const { g, item } = result;
-    if (item.shards) addShards(item.shards);
-    pushReward({ date: '5.29', time: '21:30', grade: g, name: item.n });
-    setClaimed(true);
     setPhase('idle');
     setResult(null);
   }
@@ -129,6 +103,9 @@ export function RewardScreen({ onOpenBig }: { onOpenBig: () => void }) {
           <IconCheckCircle size={18} />
           <span style={{ fontSize: 13, fontWeight: 500 }}>2시간 달성 완료 · 잘하고 있어요</span>
         </div>
+        {(error || actionError) && (
+          <div style={{ fontSize: 12.5, color: 'var(--coral)' }}>{actionError ?? error}</div>
+        )}
 
         {/* 3열 메인 */}
         <div style={{ display: 'flex', gap: 18, alignItems: 'stretch' }}>

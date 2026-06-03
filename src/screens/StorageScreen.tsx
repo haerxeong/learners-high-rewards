@@ -40,25 +40,41 @@ const STORAGE_TABS: { key: StorageTab; label: string }[] = [
 export function StorageScreen() {
   const store = useStore();
   const [tab, setTab] = useState<StorageTab>('usable');
+  const [actionError, setActionError] = useState<string | null>(null);
   const extra = store.inventory;
-  const all: StorageItem[] = [
-    ...extra.map((it, i) => ({
-      id: 'x' + i,
+  const all: StorageItem[] = extra.length
+    ? extra.map((it, i) => ({
+      id: it.id ?? 'x' + i,
       n: it.n,
       e: it.e,
       grade: it.grade,
-      got: '5.29',
-      exp: '2026.11.29',
-      tab: 'usable' as StorageTab,
-    })),
-    ...STORAGE_ITEMS,
-  ];
+      got: it.got ?? '-',
+      exp: it.exp ?? '-',
+      tab: (it.status === 'used' ? 'used' : 'usable') as StorageTab,
+    }))
+    : STORAGE_ITEMS;
   const items = all.filter((i) => i.tab === tab || (tab === 'usable' && i.tab === 'soon'));
   const usableCount = all.filter((i) => i.tab === 'usable' || i.tab === 'soon').length;
+
+  async function useItem(item: StorageItem) {
+    const inv = store.inventory.find((it) => it.id === item.id);
+    if (!inv) return;
+    setActionError(null);
+    try {
+      await store.useInventoryItem(inv);
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : '사용 처리에 실패했습니다.');
+    }
+  }
 
   return (
     <div className="scroll" style={{ height: '100%', overflowY: 'auto', paddingBottom: 28 }}>
       <TabletHeader title="보관함" sub="받은 기프티콘을 모았어요" right={<ShardCounter value={store.shards} />} />
+      {(store.error || actionError) && (
+        <div style={{ padding: '0 32px 10px', fontSize: 12.5, color: 'var(--coral)' }}>
+          {actionError ?? store.error}
+        </div>
+      )}
 
       <div style={{ padding: '0 32px', display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* 요약 + 탭 */}
@@ -120,7 +136,7 @@ export function StorageScreen() {
                   <div className="t-cap">{used ? `${it.got} 사용` : `받은 날 ${it.got} · 만료 ${it.exp}`}</div>
                 </div>
                 {!used && (
-                  <PillBtn variant={it.tab === 'soon' ? 'coral' : 'mint'} size="sm" style={{ gap: 6 }}>
+                  <PillBtn variant={it.tab === 'soon' ? 'coral' : 'mint'} size="sm" style={{ gap: 6 }} onClick={() => useItem(it)}>
                     <IconBarcode size={15} /> 사용
                   </PillBtn>
                 )}

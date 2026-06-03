@@ -86,6 +86,8 @@ function WinnerCard({ w, mine }: { w: Winner; mine?: boolean }) {
 export function HallScreen() {
   const store = useStore();
   const mine = store.myHall;
+  const winners = store.hallWinners.length ? store.hallWinners : HALL_WINNERS;
+  const count = Math.max(store.hallCount, winners.length);
   return (
     <div className="scroll" style={{ height: '100%', overflowY: 'auto', paddingBottom: 28 }}>
       <TabletHeader title="명예의 전당" sub="이번 달 BIG 리워드 당첨자" right={<ShardCounter value={store.shards} />} />
@@ -108,7 +110,7 @@ export function HallScreen() {
           </span>
           <div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontSize: 28, fontWeight: 500, color: 'var(--gold)' }}>{mine ? 13 : 12}명</span>
+              <span style={{ fontSize: 28, fontWeight: 500, color: 'var(--gold)' }}>{mine ? count + 1 : count}명</span>
               <span className="t-body-s">이번 달 누적 당첨</span>
             </div>
             <div className="t-cap" style={{ marginTop: 2 }}>
@@ -129,7 +131,7 @@ export function HallScreen() {
 
         {/* 당첨자 리스트 */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-          {HALL_WINNERS.map((w, i) => (
+          {winners.map((w, i) => (
             <WinnerCard key={i} w={w} />
           ))}
         </div>

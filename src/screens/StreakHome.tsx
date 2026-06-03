@@ -1,17 +1,29 @@
+import { useState } from 'react';
 import { ACHIEVED, MAY_FIRST_DOW, SHIELDED, TODAY, WEEKDAYS } from '../data';
 import { IconChart, IconCheckCircle, IconClock, IconDots, IconFlame, IconGift, IconShield } from '../icons';
 import { useStore } from '../store';
 import { Card } from '../components/ui/Card';
 import { Gauge } from '../components/ui/Gauge';
+import { PillBtn } from '../components/ui/PillBtn';
 import { ShardCounter } from '../components/ui/ShardCounter';
 import { StatChip } from '../components/ui/StatChip';
 import { TabletHeader } from '../components/TabletHeader';
 
-function CalendarCell({ day }: { day: number | null }) {
+function CalendarCell({
+  day,
+  achievedDays,
+  shieldedDays,
+  today,
+}: {
+  day: number | null;
+  achievedDays: Set<number>;
+  shieldedDays: Set<number>;
+  today: number;
+}) {
   if (!day) return <div />;
-  const achieved = ACHIEVED.has(day);
-  const shielded = SHIELDED.has(day);
-  const isToday = day === TODAY;
+  const achieved = achievedDays.has(day);
+  const shielded = shieldedDays.has(day);
+  const isToday = day === today;
   return (
     <div style={{ aspectRatio: '1', display: 'grid', placeItems: 'center' }}>
       <div
@@ -66,14 +78,67 @@ const CHECKLIST = [
 ];
 
 export function StreakHome() {
-  const { streak, shards, shields } = useStore();
+  const { streak, shards, shields, study, useShield, resetDemo, error } = useStore();
+  const [shielding, setShielding] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [shieldMessage, setShieldMessage] = useState<string | null>(null);
+  const todayDate = study ? new Date(study.today) : null;
+  const today = todayDate?.getDate() ?? TODAY;
+  const achievedDays = new Set(study?.achievedDays ?? Array.from(ACHIEVED));
+  const shieldedDays = new Set(study?.shieldedDays ?? Array.from(SHIELDED));
+  const shieldedToday = shieldedDays.has(today);
+  const studyMinutes = study?.todayStudyMinutes ?? 45;
+  const goalMinutes = study?.goalMinutes ?? 120;
+  const studyPct = goalMinutes ? Math.min(100, (studyMinutes / goalMinutes) * 100) : 0;
   const cells: (number | null)[] = [];
   for (let i = 0; i < MAY_FIRST_DOW; i++) cells.push(null);
   for (let d = 1; d <= 31; d++) cells.push(d);
 
+  async function handleUseShield() {
+    setShielding(true);
+    setShieldMessage(null);
+    try {
+      await useShield();
+      setShieldMessage('보호막을 사용해 오늘의 연속 기록을 지켰어요.');
+    } catch (e) {
+      setShieldMessage(e instanceof Error ? e.message : '보호막 사용에 실패했습니다.');
+    } finally {
+      setShielding(false);
+    }
+  }
+
+  async function handleResetDemo() {
+    setResetting(true);
+    setShieldMessage(null);
+    try {
+      await resetDemo();
+      setShieldMessage('데모 데이터가 초기화됐어요. 오늘 보상을 다시 받을 수 있습니다.');
+    } catch (e) {
+      setShieldMessage(e instanceof Error ? e.message : '데모 초기화에 실패했습니다.');
+    } finally {
+      setResetting(false);
+    }
+  }
+
   return (
     <div className="scroll" style={{ height: '100%', overflowY: 'auto', paddingBottom: 28 }}>
-      <TabletHeader title="잘하고 있어요" sub="2026년 5월 · 다인 학생" right={<ShardCounter value={shards} />} />
+      <TabletHeader
+        title="잘하고 있어요"
+        sub={`${study?.monthLabel ?? '2026년 5월'} · 다인 학생`}
+        right={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <PillBtn variant="ghost" size="sm" disabled={resetting} onClick={handleResetDemo}>
+              {resetting ? '초기화 중…' : '데모 초기화'}
+            </PillBtn>
+            <ShardCounter value={shards} />
+          </div>
+        }
+      />
+      {(error || shieldMessage) && (
+        <div style={{ padding: '0 32px 10px', fontSize: 12.5, color: shieldMessage?.includes('지켰') ? 'var(--mint)' : 'var(--coral)' }}>
+          {shieldMessage ?? error}
+        </div>
+      )}
 
       <div style={{ padding: '0 32px', display: 'flex', gap: 18, alignItems: 'flex-start' }}>
         {/* 좌측 컬럼 */}
@@ -104,11 +169,11 @@ export function StreakHome() {
                 <IconClock size={30} />
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                <span style={{ fontSize: 36, fontWeight: 500, color: 'var(--text)', lineHeight: 1 }}>45</span>
-                <span style={{ fontSize: 14, color: 'var(--text-3)' }}>/ 120분</span>
+                <span style={{ fontSize: 36, fontWeight: 500, color: 'var(--text)', lineHeight: 1 }}>{studyMinutes}</span>
+                <span style={{ fontSize: 14, color: 'var(--text-3)' }}>/ {goalMinutes}분</span>
               </div>
               <div style={{ marginTop: 14 }}>
-                <Gauge value={37.5} />
+                <Gauge value={studyPct} />
               </div>
               <div className="t-cap" style={{ marginTop: 8 }}>
                 오늘 순공시간
@@ -119,7 +184,7 @@ export function StreakHome() {
           {/* 캘린더 */}
           <Card pad={20}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <span className="t-h">5월</span>
+              <span className="t-h">{todayDate ? `${todayDate.getMonth() + 1}월` : '5월'}</span>
               <span className="t-cap">목표 달성한 날을 모았어요</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', marginBottom: 6 }}>
@@ -139,7 +204,7 @@ export function StreakHome() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', rowGap: 4 }}>
               {cells.map((d, i) => (
-                <CalendarCell key={i} day={d} />
+                <CalendarCell key={i} day={d} achievedDays={achievedDays} shieldedDays={shieldedDays} today={today} />
               ))}
             </div>
             <div style={{ display: 'flex', gap: 18, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--divider)' }}>
@@ -189,9 +254,27 @@ export function StreakHome() {
 
           {/* 하단 지표 3개 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <StatChip label="이번 달 달성률" value="87%" icon={<IconChart size={15} />} />
-            <StatChip label="보상 가능" value="1회" accent="var(--coral)" icon={<IconGift size={15} />} />
-            <StatChip label="보호막" value={shields} accent="var(--mint)" icon={<IconShield size={15} />} />
+            <StatChip label="이번 달 달성률" value={`${study?.monthlyAchievementRate ?? 87}%`} icon={<IconChart size={15} />} />
+            <StatChip label="보상 가능" value={`${study?.rewardAvailableCount ?? 1}회`} accent="var(--coral)" icon={<IconGift size={15} />} />
+            <Card pad={14} soft>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ color: 'var(--mint)', flexShrink: 0 }}>
+                  <IconShield size={22} />
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>보호막 {shields}개</div>
+                  <div className="t-cap">{shieldedToday ? '오늘 기록이 보호됐어요' : '목표를 못 채운 날 연속 기록을 지켜요'}</div>
+                </div>
+                <PillBtn
+                  variant={shieldedToday ? 'ghost' : 'mint'}
+                  size="sm"
+                  disabled={shielding || shields <= 0 || shieldedToday}
+                  onClick={handleUseShield}
+                >
+                  {shielding ? '사용 중…' : shieldedToday ? '사용 완료' : '사용'}
+                </PillBtn>
+              </div>
+            </Card>
           </div>
         </div>
       </div>
