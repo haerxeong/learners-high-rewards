@@ -74,9 +74,9 @@ interface ProbRow {
 function ProbTable() {
   const rows: ProbRow[] = [
     { g: 'common', base: 70.0, boost: 67.7, actual: 69.8 },
-    { g: 'rare', base: 23.0, boost: 24.0, actual: 23.1 },
+    { g: 'rare', base: 24.8, boost: 25.6, actual: 24.9 },
     { g: 'epic', base: 5.0, boost: 6.0, actual: 5.1 },
-    { g: 'big', base: 2.0, boost: 2.3, actual: 2.0 },
+    { g: 'big', base: 0.2, boost: 0.2, actual: 0.2 },
   ];
   const sum = rows.reduce((s, r) => s + r.base, 0);
   return (
@@ -136,9 +136,9 @@ interface ValRow {
 function ValidationBars() {
   const rows: ValRow[] = [
     { g: 'common', design: 70, actual: 69.8 },
-    { g: 'rare', design: 23, actual: 23.1 },
+    { g: 'rare', design: 24.8, actual: 24.9 },
     { g: 'epic', design: 5, actual: 5.1 },
-    { g: 'big', design: 2, actual: 2.0 },
+    { g: 'big', design: 0.2, actual: 0.2 },
   ];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

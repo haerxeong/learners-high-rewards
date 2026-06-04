@@ -17,9 +17,9 @@ import { ReflectionStory } from './ReflectionStory';
 /* 시안 표기용 — 실제 확률은 서버가 내려준 값을 표시만 한다 (프론트 하드코딩 금지) */
 const REWARD_ODDS: { g: GradeKey; pct: number }[] = [
   { g: 'common', pct: 70 },
-  { g: 'rare', pct: 23 },
+  { g: 'rare', pct: 24.8 },
   { g: 'epic', pct: 5 },
-  { g: 'big', pct: 2 },
+  { g: 'big', pct: 0.2 },
 ];
 
 interface PoolItem {

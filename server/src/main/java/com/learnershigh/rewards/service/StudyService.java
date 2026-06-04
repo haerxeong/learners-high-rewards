@@ -14,19 +14,44 @@ public class StudyService {
 
     public StudySummaryResponse summary(UserAccount user) {
         LocalDate today = LocalDate.now(ZONE);
-        List<Integer> shieldedDays = new ArrayList<>(List.of(6));
-        if (today.equals(user.getLastShieldUsedDate()) && !shieldedDays.contains(today.getDayOfMonth())) {
-            shieldedDays.add(today.getDayOfMonth());
-        }
+        List<Integer> achievedDays = achievedDaysForCurrentMonth(user, today);
+        List<Integer> shieldedDays = shieldedDaysForCurrentMonth(user, today);
+        int protectedDays = achievedDays.size() + shieldedDays.size();
+        int todayStudyMinutes = today.equals(user.getLastDailyClaimDate()) ? 120 : 45;
+        int monthlyAchievementRate = today.getDayOfMonth() == 0
+                ? 0
+                : Math.round((protectedDays * 100.0f) / today.getDayOfMonth());
+
         return new StudySummaryResponse(
                 today,
                 today.getYear() + "년 " + today.getMonthValue() + "월",
-                45,
+                todayStudyMinutes,
                 120,
-                87,
+                monthlyAchievementRate,
                 today.equals(user.getLastDailyClaimDate()) ? 0 : 1,
-                List.of(1, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29),
+                achievedDays,
                 shieldedDays
         );
+    }
+
+    private List<Integer> achievedDaysForCurrentMonth(UserAccount user, LocalDate today) {
+        LocalDate streakEnd = today.equals(user.getLastDailyClaimDate()) ? today : today.minusDays(1);
+        LocalDate streakStart = streakEnd.minusDays(Math.max(0, user.getStreak() - 1));
+        List<Integer> days = new ArrayList<>();
+        for (LocalDate d = streakStart; !d.isAfter(streakEnd); d = d.plusDays(1)) {
+            if (d.getYear() == today.getYear() && d.getMonth() == today.getMonth()) {
+                days.add(d.getDayOfMonth());
+            }
+        }
+        return days;
+    }
+
+    private List<Integer> shieldedDaysForCurrentMonth(UserAccount user, LocalDate today) {
+        List<Integer> days = new ArrayList<>();
+        LocalDate shielded = user.getLastShieldUsedDate();
+        if (shielded != null && shielded.getYear() == today.getYear() && shielded.getMonth() == today.getMonth()) {
+            days.add(shielded.getDayOfMonth());
+        }
+        return days;
     }
 }

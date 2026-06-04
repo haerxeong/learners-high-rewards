@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ACHIEVED, MAY_FIRST_DOW, SHIELDED, TODAY, WEEKDAYS } from '../data';
+import { WEEKDAYS } from '../data';
 import { IconChart, IconCheckCircle, IconClock, IconDots, IconFlame, IconGift, IconShield } from '../icons';
 import { useStore } from '../store';
 import { Card } from '../components/ui/Card';
@@ -77,22 +77,30 @@ const CHECKLIST = [
   { t: '국어 지문 분석', done: false },
 ];
 
+function parseStudyDate(value?: string) {
+  if (!value) return new Date();
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export function StreakHome() {
   const { streak, shards, shields, study, useShield, resetDemo, error } = useStore();
   const [shielding, setShielding] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [shieldMessage, setShieldMessage] = useState<string | null>(null);
-  const todayDate = study ? new Date(study.today) : null;
-  const today = todayDate?.getDate() ?? TODAY;
-  const achievedDays = new Set(study?.achievedDays ?? Array.from(ACHIEVED));
-  const shieldedDays = new Set(study?.shieldedDays ?? Array.from(SHIELDED));
+  const todayDate = parseStudyDate(study?.today);
+  const today = todayDate.getDate();
+  const achievedDays = new Set(study?.achievedDays ?? []);
+  const shieldedDays = new Set(study?.shieldedDays ?? []);
   const shieldedToday = shieldedDays.has(today);
   const studyMinutes = study?.todayStudyMinutes ?? 45;
   const goalMinutes = study?.goalMinutes ?? 120;
   const studyPct = goalMinutes ? Math.min(100, (studyMinutes / goalMinutes) * 100) : 0;
+  const monthFirstDow = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1).getDay();
+  const daysInMonth = new Date(todayDate.getFullYear(), todayDate.getMonth() + 1, 0).getDate();
   const cells: (number | null)[] = [];
-  for (let i = 0; i < MAY_FIRST_DOW; i++) cells.push(null);
-  for (let d = 1; d <= 31; d++) cells.push(d);
+  for (let i = 0; i < monthFirstDow; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
   async function handleUseShield() {
     setShielding(true);
@@ -124,7 +132,7 @@ export function StreakHome() {
     <div className="scroll" style={{ height: '100%', overflowY: 'auto', paddingBottom: 28 }}>
       <TabletHeader
         title="잘하고 있어요"
-        sub={`${study?.monthLabel ?? '2026년 5월'} · 다인 학생`}
+        sub={`${study?.monthLabel ?? `${todayDate.getFullYear()}년 ${todayDate.getMonth() + 1}월`} · 다인 학생`}
         right={
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <PillBtn variant="ghost" size="sm" disabled={resetting} onClick={handleResetDemo}>
@@ -184,7 +192,7 @@ export function StreakHome() {
           {/* 캘린더 */}
           <Card pad={20}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <span className="t-h">{todayDate ? `${todayDate.getMonth() + 1}월` : '5월'}</span>
+              <span className="t-h">{todayDate.getMonth() + 1}월</span>
               <span className="t-cap">목표 달성한 날을 모았어요</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', marginBottom: 6 }}>

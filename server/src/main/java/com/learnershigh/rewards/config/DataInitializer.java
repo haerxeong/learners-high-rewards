@@ -48,11 +48,11 @@ public class DataInitializer implements CommandLineRunner {
         if (rewardItems.count() == 0) {
             reward("성장 조각 +12", "🌱", Grade.COMMON, RewardKind.SHARDS, 12, 420);
             reward("성장 조각 +8", "🌱", Grade.COMMON, RewardKind.SHARDS, 8, 280);
-            reward("레어 조각 +25", "💧", Grade.RARE, RewardKind.SHARDS, 25, 160);
+            reward("레어 조각 +25", "💧", Grade.RARE, RewardKind.SHARDS, 25, 178);
             reward("편의점 1천원권", "🏪", Grade.RARE, RewardKind.COUPON, 0, 70);
             reward("에픽 조각 +60", "🔮", Grade.EPIC, RewardKind.SHARDS, 60, 35);
             reward("베스킨라빈스 파인트", "🍨", Grade.EPIC, RewardKind.COUPON, 0, 15);
-            reward("BIG 리워드 진입", "✨", Grade.BIG, RewardKind.BIG_ENTRY, 0, 20);
+            reward("BIG 리워드 진입", "✨", Grade.BIG, RewardKind.BIG_ENTRY, 0, 2);
         }
 
         if (shopItems.count() == 0) {
