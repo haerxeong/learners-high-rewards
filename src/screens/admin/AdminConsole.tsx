@@ -1,7 +1,8 @@
 /* AdminConsole.tsx — 운영 백오피스 (확률·보상 관리) · 데스크탑 레이아웃 */
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { GRADES } from '../../data';
 import { GradeBadge } from '../../components/ui/GradeBadge';
+import { api, type AdminShopItem, type AdminShopItemInput } from '../../api';
 import {
   IconChart,
   IconCheckCircle,
@@ -187,60 +188,199 @@ function ValidationBars() {
   );
 }
 
-interface PoolRow {
-  n: string;
-  g: GradeKey;
-  price: number;
-  stock: number;
-  on: boolean;
-}
-
 function ProductPool() {
-  const init: PoolRow[] = [
-    { n: '스타벅스 아메리카노', g: 'common', price: 100, stock: 842, on: true },
-    { n: '편의점 기프티콘 5천원', g: 'common', price: 100, stock: 1203, on: true },
-    { n: '베스킨라빈스 파인트', g: 'rare', price: 200, stock: 318, on: true },
-    { n: 'CGV 영화 관람권', g: 'rare', price: 250, stock: 0, on: false },
-    { n: '치킨 기프티콘', g: 'epic', price: 500, stock: 64, on: true },
-    { n: '피자 기프티콘', g: 'epic', price: 600, stock: 41, on: true },
-    { n: '애플 에어팟', g: 'big', price: 5000, stock: 12, on: true },
-    { n: '백화점 상품권 10만원', g: 'big', price: 10000, stock: 5, on: true },
-  ];
-  const [items, setItems] = useState<PoolRow[]>(init);
+  const [items, setItems] = useState<AdminShopItem[]>([]);
+  const [draft, setDraft] = useState<AdminShopItemInput>({
+    name: '',
+    emoji: '🎁',
+    grade: 'common',
+    price: 100,
+    category: '음식',
+    stock: 1,
+    active: true,
+  });
+  const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState<number | 'new' | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void loadItems();
+  }, []);
+
+  async function loadItems() {
+    try {
+      setError(null);
+      setLoading(true);
+      setItems(await api.admin.shopItems());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '상품 목록을 불러오지 못했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function createItem() {
+    if (!draft.name.trim() || !draft.emoji.trim() || !draft.category.trim()) {
+      setError('상품명, 이모지, 카테고리를 입력하세요.');
+      return;
+    }
+    try {
+      setSavingId('new');
+      setError(null);
+      const created = await api.admin.createShopItem({
+        ...draft,
+        name: draft.name.trim(),
+        emoji: draft.emoji.trim(),
+        category: draft.category.trim(),
+      });
+      setItems((prev) => [...prev, created]);
+      setDraft((prev) => ({ ...prev, name: '', emoji: '🎁', stock: 1 }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '상품 등록에 실패했습니다.');
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function updateItem(next: AdminShopItem) {
+    try {
+      setSavingId(next.id);
+      setError(null);
+      const saved = await api.admin.updateShopItem(next);
+      setItems((prev) => prev.map((item) => (item.id === saved.id ? saved : item)));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '상품 수정에 실패했습니다.');
+      await loadItems();
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  function commitItem(id: number) {
+    const next = items.find((item) => item.id === id);
+    if (next) void updateItem(next);
+  }
+
+  async function deleteItem(id: number) {
+    try {
+      setSavingId(id);
+      setError(null);
+      await api.admin.deleteShopItem(id);
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '상품 삭제에 실패했습니다.');
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  const inputStyle: CSSProperties = {
+    width: '100%',
+    height: 34,
+    borderRadius: 8,
+    border: '1px solid var(--divider)',
+    background: 'rgba(255,255,255,0.04)',
+    color: 'var(--text)',
+    fontFamily: 'var(--font)',
+    fontSize: 12.5,
+    padding: '0 10px',
+  };
+
+  const actionBtn: CSSProperties = {
+    height: 30,
+    borderRadius: 8,
+    border: '1px solid var(--divider)',
+    background: 'rgba(255,255,255,0.05)',
+    color: 'var(--text-2)',
+    fontFamily: 'var(--font)',
+    fontSize: 11.5,
+    cursor: 'pointer',
+    padding: '0 10px',
+    whiteSpace: 'nowrap',
+  };
+
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-      <thead>
-        <tr>
-          <th style={th}>상품명</th>
-          <th style={th}>등급</th>
-          <th style={{ ...th, textAlign: 'right' }}>조각 가격</th>
-          <th style={{ ...th, textAlign: 'right' }}>재고</th>
-          <th style={{ ...th, textAlign: 'center' }}>활성</th>
-        </tr>
-      </thead>
-      <tbody>
-        {items.map((it, i) => (
-          <tr key={i}>
-            <td style={{ ...td, color: 'var(--text)' }}>{it.n}</td>
-            <td style={td}>
-              <GradeBadge g={it.g} />
-            </td>
-            <td style={{ ...td, textAlign: 'right' }}>{it.price.toLocaleString()}</td>
-            <td style={{ ...td, textAlign: 'right', color: it.stock === 0 ? 'var(--coral)' : 'var(--text-2)' }}>
-              {it.stock === 0 ? '품절' : it.stock.toLocaleString()}
-            </td>
-            <td style={{ ...td, textAlign: 'center' }}>
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <Toggle
-                  on={it.on}
-                  onClick={() => setItems((p) => p.map((x, j) => (j === i ? { ...x, on: !x.on } : x)))}
-                />
-              </div>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 64px 110px 100px 110px 90px 78px', gap: 8, marginBottom: 12 }}>
+        <input style={inputStyle} value={draft.name} onChange={(e) => setDraft((p) => ({ ...p, name: e.target.value }))} placeholder="상품명" />
+        <input style={{ ...inputStyle, textAlign: 'center' }} value={draft.emoji} onChange={(e) => setDraft((p) => ({ ...p, emoji: e.target.value }))} placeholder="🎁" />
+        <select style={inputStyle} value={draft.grade} onChange={(e) => setDraft((p) => ({ ...p, grade: e.target.value as GradeKey }))}>
+          <option value="common">COMMON</option>
+          <option value="rare">RARE</option>
+          <option value="epic">EPIC</option>
+          <option value="big">BIG</option>
+        </select>
+        <input style={inputStyle} type="number" min={0} value={draft.price} onChange={(e) => setDraft((p) => ({ ...p, price: Number(e.target.value) }))} placeholder="가격" />
+        <input style={inputStyle} value={draft.category} onChange={(e) => setDraft((p) => ({ ...p, category: e.target.value }))} placeholder="카테고리" />
+        <input style={inputStyle} type="number" min={0} value={draft.stock} onChange={(e) => setDraft((p) => ({ ...p, stock: Number(e.target.value) }))} placeholder="재고" />
+        <button onClick={createItem} disabled={savingId === 'new'} style={{ ...actionBtn, background: 'var(--mint-soft)', color: 'var(--mint)' }}>
+          등록
+        </button>
+      </div>
+      {error && <div style={{ fontSize: 12, color: 'var(--coral)', marginBottom: 10 }}>{error}</div>}
+      {loading ? (
+        <div className="t-cap" style={{ padding: '18px 2px' }}>상품 목록을 불러오는 중</div>
+      ) : (
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={th}>상품명</th>
+              <th style={th}>등급</th>
+              <th style={{ ...th, textAlign: 'right' }}>조각 가격</th>
+              <th style={{ ...th, textAlign: 'right' }}>재고</th>
+              <th style={{ ...th, textAlign: 'center' }}>활성</th>
+              <th style={{ ...th, textAlign: 'right' }}>관리</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((it) => (
+              <tr key={it.id}>
+                <td style={{ ...td, color: 'var(--text)' }}>
+                  <span style={{ marginRight: 8 }}>{it.emoji}</span>
+                  {it.name}
+                  <span style={{ color: 'var(--text-3)', marginLeft: 8 }}>{it.category}</span>
+                </td>
+                <td style={td}>
+                  <GradeBadge g={it.grade} />
+                </td>
+                <td style={{ ...td, textAlign: 'right' }}>
+                  <input
+                    style={{ ...inputStyle, width: 92, textAlign: 'right' }}
+                    type="number"
+                    min={0}
+                    value={it.price}
+                    onChange={(e) => setItems((prev) => prev.map((x) => (x.id === it.id ? { ...x, price: Number(e.target.value) } : x)))}
+                    onBlur={() => commitItem(it.id)}
+                    disabled={savingId === it.id}
+                  />
+                </td>
+                <td style={{ ...td, textAlign: 'right' }}>
+                  <input
+                    style={{ ...inputStyle, width: 82, textAlign: 'right', color: it.stock === 0 ? 'var(--coral)' : 'var(--text)' }}
+                    type="number"
+                    min={0}
+                    value={it.stock}
+                    onChange={(e) => setItems((prev) => prev.map((x) => (x.id === it.id ? { ...x, stock: Number(e.target.value) } : x)))}
+                    onBlur={() => commitItem(it.id)}
+                    disabled={savingId === it.id}
+                  />
+                </td>
+                <td style={{ ...td, textAlign: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <Toggle on={it.active} onClick={() => updateItem({ ...it, active: !it.active })} />
+                  </div>
+                </td>
+                <td style={{ ...td, textAlign: 'right' }}>
+                  <button onClick={() => deleteItem(it.id)} disabled={savingId === it.id} style={{ ...actionBtn, color: 'var(--coral)' }}>
+                    삭제
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
   );
 }
 
