@@ -112,4 +112,14 @@ public final class ApiDtos {
     public record RewardPoolUpdateRequest(@NotNull Integer weight, @NotNull Boolean active) {}
 
     public record ShopItemUpdateRequest(@NotNull Integer price, @NotNull Integer stock, @NotNull Boolean active) {}
+
+    public record ShopItemCreateRequest(
+            @NotNull String name,
+            @NotNull String emoji,
+            @NotNull String grade,
+            @NotNull Integer price,
+            @NotNull String category,
+            @NotNull Integer stock,
+            @NotNull Boolean active
+    ) {}
 }

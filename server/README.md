@@ -4,7 +4,14 @@ Spring Boot + MySQL API for the rewards tablet prototype.
 
 ## Run locally
 
-Create/use a MySQL database user, then run the server with the password in an environment variable:
+For a quick local demo without MySQL, use the `local` profile. It stores an H2 database under `server/build/local-db`:
+
+```bash
+cd server
+SPRING_PROFILES_ACTIVE=local gradle bootRun
+```
+
+To run against MySQL, create/use a MySQL database user, then run the server with the password in an environment variable:
 
 ```bash
 export DB_USERNAME=root
@@ -52,7 +59,9 @@ curl -H 'X-Demo-User: demo-dain' http://localhost:8080/api/me/state
 - `GET /api/admin/reward-pool`: reward pool weights/activation
 - `PATCH /api/admin/reward-pool/{id}`: update `weight`, `active`
 - `GET /api/admin/shop-items`: shop item settings
+- `POST /api/admin/shop-items`: create a shop item
 - `PATCH /api/admin/shop-items/{id}`: update `price`, `stock`, `active`
+- `DELETE /api/admin/shop-items/{id}`: delete a shop item
 
 ## Example Requests
 

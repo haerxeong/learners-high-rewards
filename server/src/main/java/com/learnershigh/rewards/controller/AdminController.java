@@ -1,6 +1,7 @@
 package com.learnershigh.rewards.controller;
 
 import com.learnershigh.rewards.dto.ApiDtos.*;
+import com.learnershigh.rewards.entity.Grade;
 import com.learnershigh.rewards.entity.RewardItem;
 import com.learnershigh.rewards.entity.ShopItem;
 import com.learnershigh.rewards.repository.RewardItemRepository;
@@ -48,6 +49,27 @@ public class AdminController {
         return shopItems.findAll().stream().map(this::toAdminShopItem).toList();
     }
 
+    @PostMapping("/shop-items")
+    @Transactional
+    public AdminShopItemResponse createShopItem(@Valid @RequestBody ShopItemCreateRequest request) {
+        if (request.name().isBlank() || request.emoji().isBlank() || request.category().isBlank()) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "상품명, 이모지, 카테고리는 필수입니다.");
+        }
+        if (request.price() < 0 || request.stock() < 0) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "가격과 재고는 0 이상이어야 합니다.");
+        }
+
+        ShopItem item = new ShopItem();
+        item.setName(request.name().trim());
+        item.setEmoji(request.emoji().trim());
+        item.setGrade(parseGrade(request.grade()));
+        item.setPrice(request.price());
+        item.setCategory(request.category().trim());
+        item.setStock(request.stock());
+        item.setActive(request.active());
+        return toAdminShopItem(shopItems.save(item));
+    }
+
     @PatchMapping("/shop-items/{id}")
     @Transactional
     public AdminShopItemResponse updateShopItem(@PathVariable long id, @Valid @RequestBody ShopItemUpdateRequest request) {
@@ -60,6 +82,23 @@ public class AdminController {
         item.setStock(request.stock());
         item.setActive(request.active());
         return toAdminShopItem(shopItems.save(item));
+    }
+
+    @DeleteMapping("/shop-items/{id}")
+    @Transactional
+    public void deleteShopItem(@PathVariable long id) {
+        if (!shopItems.existsById(id)) {
+            throw new BusinessException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다.");
+        }
+        shopItems.deleteById(id);
+    }
+
+    private Grade parseGrade(String grade) {
+        try {
+            return Grade.valueOf(grade.trim().toUpperCase());
+        } catch (RuntimeException e) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "지원하지 않는 등급입니다.");
+        }
     }
 
     private AdminRewardItemResponse toAdminReward(RewardItem item) {

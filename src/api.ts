@@ -131,6 +131,27 @@ export interface AppState {
   pendingBigSpin: boolean;
 }
 
+export interface AdminShopItem {
+  id: number;
+  name: string;
+  emoji: string;
+  grade: GradeKey;
+  price: number;
+  category: string;
+  stock: number;
+  active: boolean;
+}
+
+export interface AdminShopItemInput {
+  name: string;
+  emoji: string;
+  grade: GradeKey;
+  price: number;
+  category: string;
+  stock: number;
+  active: boolean;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
@@ -144,7 +165,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const body = await res.json().catch(() => null);
     throw new Error(body?.message ?? `API 요청 실패 (${res.status})`);
   }
-  return res.json() as Promise<T>;
+  if (res.status === 204) return undefined as T;
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 function appState(dto: UserStateDto): AppState {
@@ -294,5 +317,29 @@ export const api = {
   },
   async resetDemo() {
     return appState(await request<UserStateDto>('/api/demo/reset', { method: 'POST' }));
+  },
+  admin: {
+    async shopItems() {
+      return request<AdminShopItem[]>('/api/admin/shop-items');
+    },
+    async createShopItem(input: AdminShopItemInput) {
+      return request<AdminShopItem>('/api/admin/shop-items', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      });
+    },
+    async updateShopItem(item: AdminShopItem) {
+      return request<AdminShopItem>(`/api/admin/shop-items/${item.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          price: item.price,
+          stock: item.stock,
+          active: item.active,
+        }),
+      });
+    },
+    async deleteShopItem(id: number) {
+      await request<void>(`/api/admin/shop-items/${id}`, { method: 'DELETE' });
+    },
   },
 };
